@@ -23,10 +23,9 @@ public class EmployeeService {
     public void saveEmployee(EmployeeSaveRequestDto employeeRequestSaveDto) {
 
         Employee employee;
-
-        if (employeeRequestSaveDto.getId() != null) {
-            Optional<Employee> employeeData = employeeRepo.findById(employeeRequestSaveDto.getId());
-            employee = employeeData.orElse(new Employee());
+        if (employeeRequestSaveDto.getEmail() != null) {
+            Optional<Employee> existingEmployee = employeeRepo.findByEmail(employeeRequestSaveDto.getEmail());
+            employee = existingEmployee.orElse(new Employee());
         } else {
             employee = new Employee();
         }
@@ -34,7 +33,16 @@ public class EmployeeService {
         employee.setName(employeeRequestSaveDto.getName());
         employee.setEmail(employeeRequestSaveDto.getEmail());
         employee.setJoiningDate(employeeRequestSaveDto.getJoiningDate());
-        employee.setLeaveBalance(employeeRequestSaveDto.getLeaveBalance());
+
+        BigDecimal newLeaveBalance = employeeRequestSaveDto.getLeaveBalance();
+        if (employee.getLeaveBalance() != null) {
+            newLeaveBalance = employee.getLeaveBalance().add(newLeaveBalance);
+        }
+        BigDecimal maxBalance = BigDecimal.valueOf(30);
+        if (newLeaveBalance.compareTo(maxBalance) > 0) {
+            newLeaveBalance = maxBalance;
+        }
+        employee.setLeaveBalance(newLeaveBalance);
 
         employeeRepo.save(employee);
     }
