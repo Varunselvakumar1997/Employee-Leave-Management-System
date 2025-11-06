@@ -17,6 +17,10 @@ Build and start both **PostgreSQL** and the **Spring Boot app**:
 
 docker-compose up --build
 
+### **Step 3 Verify the Containers**
+Check running containers:
+docker ps
+
 ### **To stop and remove containers**
 docker-compose down
 
