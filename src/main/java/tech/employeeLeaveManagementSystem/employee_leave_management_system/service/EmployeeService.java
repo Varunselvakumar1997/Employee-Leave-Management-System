@@ -2,6 +2,8 @@ package tech.employeeLeaveManagementSystem.employee_leave_management_system.serv
 
 
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.dto.EmployeeSaveRequestDto;
@@ -10,9 +12,11 @@ import tech.employeeLeaveManagementSystem.employee_leave_management_system.repos
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.repository.LeaveRequestRepo;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 @AllArgsConstructor
 public class EmployeeService {
 
@@ -53,6 +57,20 @@ public class EmployeeService {
     public BigDecimal getLeaveBalance(Long employeeId){
         Optional <Employee> employeeData = employeeRepo.findById(employeeId);
         return employeeData.get().getLeaveBalance();
+    }
+
+    @Transactional
+    @Scheduled(cron = "0 59 23 31 3 *") // Runs every year on March 31st at 23:59
+    public void carryForwardPrivilegedLeavesAtFinancialYearEnd() {
+        List<Employee> employees = employeeRepo.findAll();
+        for (Employee employee : employees) {
+            BigDecimal currentBalance = employee.getLeaveBalance();
+            BigDecimal carryForward = currentBalance.min(BigDecimal.TEN);
+            BigDecimal newBalance = carryForward.min(BigDecimal.valueOf(30));
+            employee.setLeaveBalance(newBalance);
+            employeeRepo.save(employee);
+        }
+        log.info("Financial year-end carry-forward completed for all employees.");
     }
 
 }
