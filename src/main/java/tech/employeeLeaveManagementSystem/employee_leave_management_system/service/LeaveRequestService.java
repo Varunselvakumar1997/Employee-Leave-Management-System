@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.*;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.dto.LeaveApprovalDto;
+import tech.employeeLeaveManagementSystem.employee_leave_management_system.dto.LeaveEvent;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.dto.LeaveRequestDto;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.entity.Employee;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.entity.LeaveRequest;
@@ -16,6 +17,7 @@ import tech.employeeLeaveManagementSystem.employee_leave_management_system.repos
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.repository.LeaveRequestRepo;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
@@ -27,6 +29,8 @@ public class LeaveRequestService {
     private final LeaveRequestRepo leaveRequestRepo;
 
     private final EmployeeRepo employeeRepo;
+
+    private final LeaveEventProducer leaveEventProducer;
 
     // Method for leave request
     @Transactional
@@ -83,19 +87,33 @@ public class LeaveRequestService {
                 employee.setLeaveBalance(updatedBalance);
                 employeeRepo.save(employee);
             }
-
-            if (existingRequest.getType() == LeaveType.SICK &&
-                    leaveApprovalDto.getLeaveStatus() == LeaveStatus.APPROVED) {
-                log.info("Sick leave approved");
-            }
-            existingRequest.setStatus(leaveApprovalDto.getLeaveStatus());
-            leaveRequestRepo.save(existingRequest);
-            String message = (leaveApprovalDto.getLeaveStatus() == LeaveStatus.APPROVED)
-                    ? "Leave request approved successfully!"
-                    : "Leave request rejected successfully!";
-            return ResponseEntity.status(HttpStatus.CREATED).body(message);
         }
-        return null;
+
+        if (existingRequest.getType() == LeaveType.SICK &&
+                leaveApprovalDto.getLeaveStatus() == LeaveStatus.APPROVED) {
+            log.info("Sick leave approved");
+        }
+        if (leaveApprovalDto.getLeaveStatus() == LeaveStatus.APPROVED) {
+
+            LeaveEvent event = new LeaveEvent(
+                    "LEAVE_APPROVED",
+                    employee.getId(),
+                    existingRequest.getStartDate(),
+                    existingRequest.getEndDate(),
+                    (int) daysRequested,
+                    ZonedDateTime.now()
+            );
+
+            leaveEventProducer.publishLeaveApprovedEvent(event);
+            log.info("Kafka event published: {}", event);
+        }
+
+        existingRequest.setStatus(leaveApprovalDto.getLeaveStatus());
+        leaveRequestRepo.save(existingRequest);
+        String message = (leaveApprovalDto.getLeaveStatus() == LeaveStatus.APPROVED)
+                ? "Leave request approved successfully!"
+                : "Leave request rejected successfully!";
+        return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
 }

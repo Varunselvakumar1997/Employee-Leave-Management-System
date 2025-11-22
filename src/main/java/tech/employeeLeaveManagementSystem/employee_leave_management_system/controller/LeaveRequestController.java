@@ -9,7 +9,7 @@ import tech.employeeLeaveManagementSystem.employee_leave_management_system.servi
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/leaveRequest")
+@RequestMapping("/api/v1/leaveRequest")
 public class LeaveRequestController{
 
     private final LeaveRequestService leaveRequestService;
