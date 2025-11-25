@@ -6,7 +6,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.entity.Employee;
 import tech.employeeLeaveManagementSystem.employee_leave_management_system.repository.EmployeeRepo;
-import org.springframework.cache.annotation.Cacheable;
 
 import java.math.BigDecimal;
 
@@ -17,8 +16,9 @@ public class LeaveBalanceService {
 
     private final EmployeeRepo employeeRepo;
 
-    @Cacheable(value = "balance", key = "'balance:' + #employeeId")
-    public BigDecimal getLeaveBalance(Long employeeId) {
+    @CachePut(value = "balance", key = "'balance:' + #employeeId")
+    public BigDecimal updateBalanceCache(Long employeeId) {
+        log.info("CACHE UPDATE → Updating Redis cache for employee {}", employeeId);
 
         log.info("Cache MISS → Fetching leave balance from DB for employee {}", employeeId);
 

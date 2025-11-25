@@ -32,6 +32,8 @@ public class LeaveRequestService {
 
     private final LeaveEventProducer leaveEventProducer;
 
+    private final LeaveBalanceService leaveBalanceService;
+
     // Method for leave request
     @Transactional
     public ResponseEntity<?> submitLeaveRequest(LeaveRequestDto leaveRequestDto) {
@@ -86,6 +88,8 @@ public class LeaveRequestService {
                 }
                 employee.setLeaveBalance(updatedBalance);
                 employeeRepo.save(employee);
+
+                leaveBalanceService.updateBalanceCache(employee.getId());
             }
         }
 
