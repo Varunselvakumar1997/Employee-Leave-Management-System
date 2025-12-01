@@ -51,7 +51,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: leave_management
+      POSTGRES_DB: leave_management_system
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
     volumes:
