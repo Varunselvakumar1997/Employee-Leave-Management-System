@@ -86,9 +86,11 @@ jobs:
       - name: Build leave-service
         run: |
           cd leave-service
+          chmod +x gradlew
           ./gradlew clean build
 
       - name: Build notification-service
         run: |
           cd notification-service
+          chmod +x gradlew
           ./gradlew clean build
